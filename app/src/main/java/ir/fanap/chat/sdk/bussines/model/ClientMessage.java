@@ -1,14 +1,16 @@
-package ir.fanap.chat.sdk.application.bussines.model;
+package ir.fanap.chat.sdk.bussines.model;
 
 //Messages that send from server to client
 public class ClientMessage {
-
+/**
+ * @Param senderId shows that the message was received from which device(Peer id)
+ * */
     private long id;
-    private long senderMessage;
-    private String senderName;
+    private int type;
+    private long senderMessageId;
     private long senderId;
     private long trackerId;
-    private int Type;
+    private String senderName;
     private String content;
     private String address;
     private String origin;
@@ -21,12 +23,12 @@ public class ClientMessage {
         this.id = id;
     }
 
-    public long getSenderMessage() {
-        return senderMessage;
+    public long getSenderMessageId() {
+        return senderMessageId;
     }
 
-    public void setSenderMessage(long senderMessage) {
-        this.senderMessage = senderMessage;
+    public void setSenderMessageId(long senderMessageId) {
+        this.senderMessageId = senderMessageId;
     }
 
     public String getSenderName() {
@@ -54,11 +56,11 @@ public class ClientMessage {
     }
 
     public int getType() {
-        return Type;
+        return type;
     }
 
     public void setType(int type) {
-        Type = type;
+        this.type = type;
     }
 
     public String getContent() {

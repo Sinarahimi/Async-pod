@@ -1,4 +1,4 @@
-package ir.fanap.chat.sdk.application.bussines.model;
+package ir.fanap.chat.sdk.bussines.model;
 
 public class RegistrationRequest {
 

@@ -1,6 +1,6 @@
-package ir.fanap.chat.sdk.application.bussines.model;
+package ir.fanap.chat.sdk.bussines.model;
 
-public class MessageWrapperVO {
+public class MessageWrapperVo {
 
     private int type;
     private String content;
