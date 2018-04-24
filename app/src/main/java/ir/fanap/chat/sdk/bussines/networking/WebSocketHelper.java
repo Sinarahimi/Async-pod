@@ -23,13 +23,14 @@ import java.util.UUID;
 import ir.fanap.chat.sdk.bussines.model.AsyncMessageType;
 import ir.fanap.chat.sdk.bussines.model.ClientMessage;
 import ir.fanap.chat.sdk.bussines.model.Message;
-import ir.fanap.chat.sdk.bussines.model.MessageVo;
 import ir.fanap.chat.sdk.bussines.model.MessageWrapperVo;
 import ir.fanap.chat.sdk.bussines.model.PeerInfo;
 import ir.fanap.chat.sdk.bussines.model.PeerMessage;
 import ir.fanap.chat.sdk.bussines.model.RegistrationRequest;
 
-public class WebsocketHelper extends WebSocketAdapter {
+import static com.neovisionaries.ws.client.WebSocketState.OPEN;
+
+public class WebSocketHelper extends WebSocketAdapter {
 
     private static final int TIMEOUT = 5000;
     /**
@@ -38,7 +39,6 @@ public class WebsocketHelper extends WebSocketAdapter {
      */
     private WebSocket webSocket;
     private Context context;
-    private String url;
     private static final String TAG = "WebSocketHelper" + " ";
     private static String uniqueID = null;
     private static final String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
@@ -47,7 +47,8 @@ public class WebsocketHelper extends WebSocketAdapter {
     private SharedPreferences sharedPrefs;
     private MessageWrapperVo messageWrapperVo;
     private Moshi moshi;
-
+    private String errorMessage;
+    private String message;
 
     public void init(String socketServerAddress, String appId) {
         moshi = new Moshi.Builder().build();
@@ -67,71 +68,87 @@ public class WebsocketHelper extends WebSocketAdapter {
         @AsyncMessageType.MessageType int currentMessageType = type;
         switch (currentMessageType) {
             case AsyncMessageType.MessageType.ACK:
-                MessageVo messageVo = new MessageVo();
-                //TODO how should i fill MessageID with the content that in the client message
+                //TODO what should i do with
 
-                long messageid = 11;
-                messageVo.setMessageId(messageid);
-                messageVo.setContent("");
-                JsonAdapter<MessageVo> jsonMessageVoAdapter = moshi.adapter(MessageVo.class);
-                String jsonMessageVo = jsonMessageVoAdapter.toJson(messageVo);
-                messageWrapper(jsonMessageVo, AsyncMessageType.MessageType.ACK);
+                /**
+                 * <P>
+                 * @Param senderMessageId
+                 *
+                 * </P>
+                 *
+                 * */
+                long senderMessageid = clientMessage.getSenderMessageId();
                 break;
             case AsyncMessageType.MessageType.DEVICE_REGISTER:
-                //TODO the content of the client message has a PeerID and we have to persist that
+                String peerId = clientMessage.getContent();
 
-                isServerRegister = true;
-                RegistrationRequest registrationRequest = new RegistrationRequest();
-                registrationRequest.setName("oauth-wire");
-                JsonAdapter<RegistrationRequest> jsonRegistrationRequestVoAdapter = moshi.adapter(RegistrationRequest.class);
-                String jsonRegistrationRequestVo = jsonRegistrationRequestVoAdapter.toJson(registrationRequest);
-                String jsonMessageWrapperVo = getMessageWrapper(moshi, jsonRegistrationRequestVo,AsyncMessageType.MessageType.DEVICE_REGISTER);
-                websocket.sendText(jsonMessageWrapperVo);
+                if (isServerRegister) {
+                    if (websocket.getState() == OPEN) {
+                        if (websocket.getFrameQueueSize() > 0) {
+
+                        }
+                    }
+
+                } else {
+                    RegistrationRequest registrationRequest = new RegistrationRequest();
+                    registrationRequest.setName("oauth-wire");
+                    JsonAdapter<RegistrationRequest> jsonRegistrationRequestVoAdapter = moshi.adapter(RegistrationRequest.class);
+                    String jsonRegistrationRequestVo = jsonRegistrationRequestVoAdapter.toJson(registrationRequest);
+                    String jsonMessageWrapperVo = getMessageWrapper(moshi, jsonRegistrationRequestVo, AsyncMessageType.MessageType.SERVER_REGISTER);
+                    websocket.sendText(jsonMessageWrapperVo);
+                }
+
                 break;
             case AsyncMessageType.MessageType.ERROR_MESSAGE:
-                //TODO log at last we have to give it to the chat package
-
+                Log.e(TAG, clientMessage.getContent());
+                setErrorMessage(clientMessage.getContent());
                 break;
             case AsyncMessageType.MessageType.MESSAGE_ACK_NEEDED:
-                // TODO plus you give it to chat package you sent ACK to the server also
+                setMessage(clientMessage.getContent());
+                Message message = new Message();
+                message.setMessageId(clientMessage.getSenderMessageId());
 
+                JsonAdapter<Message> jsonMessageAdapter = moshi.adapter(Message.class);
+                String jsonMessage = jsonMessageAdapter.toJson(message);
+                String jsonMessageWrapper = getMessageWrapper(moshi, jsonMessage, AsyncMessageType.MessageType.ACK);
+                websocket.sendText(jsonMessageWrapper);
                 break;
             case AsyncMessageType.MessageType.MESSAGE_SENDER_ACK_NEEDED:
-                // TODO plus you give it to chat package you sent ACK to the server also
+                setMessage(clientMessage.getContent());
+                Message messageSenderAckNeeded = new Message();
+                messageSenderAckNeeded.setMessageId(clientMessage.getSenderMessageId());
+
+                JsonAdapter<Message> jsonSenderAckNeededAdapter = moshi.adapter(Message.class);
+                String jsonSenderAckNeeded = jsonSenderAckNeededAdapter.toJson(messageSenderAckNeeded);
+                String jsonSenderAckNeededWrapper = getMessageWrapper(moshi, jsonSenderAckNeeded, AsyncMessageType.MessageType.ACK);
+                websocket.sendText(jsonSenderAckNeededWrapper);
 
                 break;
             case AsyncMessageType.MessageType.MESSAGE:
-                //TODO just give it to the chat package
-
+                setMessage(clientMessage.getContent());
                 break;
             case AsyncMessageType.MessageType.PEER_REMOVED:
-                //TODO Ask
 
                 break;
             case AsyncMessageType.MessageType.PING:
                 if (!isDeviceRegister) {
-//                    uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
+                    //  uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
                     PeerInfo peerInfo = new PeerInfo();
-                    peerInfo.setDeviceId(clientMessage.getContent());
                     peerInfo.setRenew(true);
-
+                    if (clientMessage != null) {
+                        peerInfo.setDeviceId(clientMessage.getContent());
+                    }
                     JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
                     String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfo);
                     messageWrapper(peerMessageJson, AsyncMessageType.MessageType.DEVICE_REGISTER);
                     JsonAdapter<MessageWrapperVo> jsonMessageWrapperVOAdapter = moshi.adapter(MessageWrapperVo.class);
-                    String jsonMessageWrapper = jsonMessageWrapperVOAdapter.toJson(messageWrapperVo);
-                    websocket.sendText(jsonMessageWrapper);
+                    String jsonPeerInfoWrapper = jsonMessageWrapperVOAdapter.toJson(messageWrapperVo);
+                    websocket.sendText(jsonPeerInfoWrapper);
 
                 } else websocket.sendPing();
                 break;
             case AsyncMessageType.MessageType.SERVER_REGISTER:
-                // The server is register
-                if (isDeviceRegister) {
-                    if (!isServerRegister) {
-                        isDeviceRegister = true;
-                        sendPing();
-                    }
-                }
+                isServerRegister = true;
                 break;
         }
     }
@@ -221,7 +238,7 @@ public class WebsocketHelper extends WebSocketAdapter {
         message.setContent(textContent);
         JsonAdapter<Message> jsonAdapter = moshi.adapter(Message.class);
         String jsonMessage = jsonAdapter.toJson(message);
-        messageWrapper(jsonMessage,AsyncMessageType.MessageType.MESSAGE_ACK_NEEDED);
+        messageWrapper(jsonMessage, AsyncMessageType.MessageType.MESSAGE_ACK_NEEDED);
 
         //TODO next
 //        webSocket.sendText(getMessageWrapper(moshi,));
@@ -247,5 +264,21 @@ public class WebsocketHelper extends WebSocketAdapter {
     public void onCloseFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
         super.onCloseFrame(websocket, frame);
         //TODO connect with refresh with PeerInfo
+    }
+
+    private void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    private void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }
