@@ -15,13 +15,15 @@ interface SocketContract {
 
         void showOnMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames);
 
-        void showOnConncetError(WebSocket websocket, WebSocketException exception);
+        void showOnConnectError(WebSocket websocket, WebSocketException exception);
     }
 
     interface presenter {
         void getMessage();
 
-        void sendMessage();
+        void connect(String socketServerAddress, String appId);
+
+        void sendMessage(String textMessage);
 
         void getErrorMessage();
     }

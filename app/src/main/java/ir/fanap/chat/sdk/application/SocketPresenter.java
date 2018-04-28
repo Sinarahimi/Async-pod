@@ -1,5 +1,7 @@
 package ir.fanap.chat.sdk.application;
 
+import android.content.Context;
+
 import ir.fanap.chat.sdk.bussines.networking.WebSocketHelper;
 
 public class SocketPresenter implements SocketContract.presenter {
@@ -7,8 +9,9 @@ public class SocketPresenter implements SocketContract.presenter {
     private WebSocketHelper webSocketHelper;
     private SocketContract.view view;
 
-    public SocketPresenter (){
-
+    public SocketPresenter(SocketContract.view view, Context context) {
+        this.view = view;
+        webSocketHelper = WebSocketHelper.getInstance(context);
     }
 
     @Override
@@ -18,8 +21,13 @@ public class SocketPresenter implements SocketContract.presenter {
     }
 
     @Override
-    public void sendMessage() {
+    public void connect(String socketServerAddress, String appId) {
+        webSocketHelper.webSocketConnect(socketServerAddress, appId);
+    }
 
+    @Override
+    public void sendMessage(String textMessage) {
+        webSocketHelper.sendMessage(textMessage);
     }
 
     @Override

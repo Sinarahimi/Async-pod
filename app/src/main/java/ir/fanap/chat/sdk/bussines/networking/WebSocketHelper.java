@@ -38,21 +38,28 @@ public class WebSocketHelper extends WebSocketAdapter {
      * and for secure WebSocket connections (wss:).
      */
     private WebSocket webSocket;
-    private Context context;
     private static final String TAG = "WebSocketHelper" + " ";
+    private static WebSocketHelper instance;
     private static String uniqueID = null;
     private static final String PREF_UNIQUE_ID = "PREF_UNIQUE_ID";
     private boolean isDeviceRegister = false;
     private boolean isServerRegister = false;
-    private SharedPreferences sharedPrefs;
+    private static SharedPreferences sharedPrefs;
     private MessageWrapperVo messageWrapperVo;
-    private Moshi moshi;
+    private static Moshi moshi;
     private String errorMessage;
     private String message;
 
-    public void init(String socketServerAddress, String appId) {
-        moshi = new Moshi.Builder().build();
-        webSocketConnect(socketServerAddress, appId);
+    private WebSocketHelper() {
+    }
+
+    public static WebSocketHelper getInstance(Context context) {
+        if (instance == null) {
+            sharedPrefs = context.getSharedPreferences(PREF_UNIQUE_ID, Context.MODE_PRIVATE);
+            moshi = new Moshi.Builder().build();
+            instance = new WebSocketHelper();
+        }
+        return instance;
     }
 
     @Override
@@ -68,16 +75,7 @@ public class WebSocketHelper extends WebSocketAdapter {
         @AsyncMessageType.MessageType int currentMessageType = type;
         switch (currentMessageType) {
             case AsyncMessageType.MessageType.ACK:
-                //TODO what should i do with
-
-                /**
-                 * <P>
-                 * @Param senderMessageId
-                 *
-                 * </P>
-                 *
-                 * */
-                long senderMessageid = clientMessage.getSenderMessageId();
+                setMessage(clientMessage.getContent());
                 break;
             case AsyncMessageType.MessageType.DEVICE_REGISTER:
                 String peerId = clientMessage.getContent();
@@ -122,7 +120,6 @@ public class WebSocketHelper extends WebSocketAdapter {
                 String jsonSenderAckNeeded = jsonSenderAckNeededAdapter.toJson(messageSenderAckNeeded);
                 String jsonSenderAckNeededWrapper = getMessageWrapper(moshi, jsonSenderAckNeeded, AsyncMessageType.MessageType.ACK);
                 websocket.sendText(jsonSenderAckNeededWrapper);
-
                 break;
             case AsyncMessageType.MessageType.MESSAGE:
                 setMessage(clientMessage.getContent());
@@ -132,17 +129,16 @@ public class WebSocketHelper extends WebSocketAdapter {
                 break;
             case AsyncMessageType.MessageType.PING:
                 if (!isDeviceRegister) {
-                    //  uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
+                    //uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
                     PeerInfo peerInfo = new PeerInfo();
                     peerInfo.setRenew(true);
+                    peerInfo.setAppId("UIAPP");
                     if (clientMessage != null) {
                         peerInfo.setDeviceId(clientMessage.getContent());
                     }
                     JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
                     String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfo);
-                    messageWrapper(peerMessageJson, AsyncMessageType.MessageType.DEVICE_REGISTER);
-                    JsonAdapter<MessageWrapperVo> jsonMessageWrapperVOAdapter = moshi.adapter(MessageWrapperVo.class);
-                    String jsonPeerInfoWrapper = jsonMessageWrapperVOAdapter.toJson(messageWrapperVo);
+                    String jsonPeerInfoWrapper = getMessageWrapper(moshi, peerMessageJson, AsyncMessageType.MessageType.DEVICE_REGISTER);
                     websocket.sendText(jsonPeerInfoWrapper);
 
                 } else websocket.sendPing();
@@ -166,6 +162,8 @@ public class WebSocketHelper extends WebSocketAdapter {
         cause.getCause().printStackTrace();
     }
 
+
+
     @Override
     public void onConnectError(WebSocket websocket, WebSocketException exception) throws Exception {
         super.onConnectError(websocket, exception);
@@ -186,10 +184,14 @@ public class WebSocketHelper extends WebSocketAdapter {
         PeerInfo peerInfo = new PeerInfo();
         peerInfo.setRefresh(true);
 
-        //TODO connect with refresh PeerInfo
+        JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
+        String jason = jsonPeerMessageAdapter.toJson(peerInfo);
+        getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
+
+        //TODO complete this section
     }
 
-    private void webSocketConnect(String socketServerAddress, final String appId) {
+    public void webSocketConnect(String socketServerAddress, final String appId) {
         WebSocketFactory webSocketFactory = new WebSocketFactory();
         webSocketFactory.setVerifyHostname(false);
 
@@ -217,20 +219,11 @@ public class WebSocketHelper extends WebSocketAdapter {
 
     @NonNull
     private String getMessageWrapper(Moshi moshi, String json, int messageType) {
-        messageWrapper(json, messageType);
-        JsonAdapter<MessageWrapperVo> jsonMessageWrapperVoAdapter = moshi.adapter(MessageWrapperVo.class);
-        return jsonMessageWrapperVoAdapter.toJson(messageWrapperVo);
-    }
-
-    private void messageWrapper(String json, int messageType) {
         messageWrapperVo = new MessageWrapperVo();
         messageWrapperVo.setContent(json);
         messageWrapperVo.setType(messageType);
-    }
-
-    // Send a ping per 10 seconds.
-    private void sendPing() {
-        webSocket.setPingInterval(10 * 1000);
+        JsonAdapter<MessageWrapperVo> jsonMessageWrapperVoAdapter = moshi.adapter(MessageWrapperVo.class);
+        return jsonMessageWrapperVoAdapter.toJson(messageWrapperVo);
     }
 
     public void sendMessage(String textContent) {
@@ -238,17 +231,14 @@ public class WebSocketHelper extends WebSocketAdapter {
         message.setContent(textContent);
         JsonAdapter<Message> jsonAdapter = moshi.adapter(Message.class);
         String jsonMessage = jsonAdapter.toJson(message);
-        messageWrapper(jsonMessage, AsyncMessageType.MessageType.MESSAGE_ACK_NEEDED);
-
-        //TODO next
-//        webSocket.sendText(getMessageWrapper(moshi,));
+        String wrapperJsonString = getMessageWrapper(moshi, jsonMessage, AsyncMessageType.MessageType.MESSAGE_ACK_NEEDED);
+        webSocket.sendText(wrapperJsonString);
     }
 
     //  it's (relatively) easily resettable because it only persists as long as the app is installed.
     private synchronized String getUniqueID() {
         if (uniqueID == null) {
-            sharedPrefs = context.getSharedPreferences(
-                    PREF_UNIQUE_ID, Context.MODE_PRIVATE);
+
             uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
             if (uniqueID == null) {
                 uniqueID = UUID.randomUUID().toString();
@@ -261,9 +251,17 @@ public class WebSocketHelper extends WebSocketAdapter {
     }
 
     @Override
+    public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
+        super.onDisconnected(websocket, serverCloseFrame, clientCloseFrame, closedByServer);
+        websocket.connectAsynchronously().recreate();
+    }
+
+    @Override
     public void onCloseFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
         super.onCloseFrame(websocket, frame);
+        Log.e("onCloseFrame",frame.getCloseReason());
         //TODO connect with refresh with PeerInfo
+
     }
 
     private void setErrorMessage(String errorMessage) {
