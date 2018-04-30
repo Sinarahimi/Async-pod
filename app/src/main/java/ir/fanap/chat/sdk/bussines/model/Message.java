@@ -4,6 +4,7 @@ package ir.fanap.chat.sdk.bussines.model;
  * {@param peerName } name of receiver peer
  * {@param receivers} array of receiver peer ids (if you use this, peerName will be ignored)
  * {@param priority} priority of message 1-10, lower has more priority
+ * {@param ttl} time to live for message in millisecond
  */
 public class Message {
 

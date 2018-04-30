@@ -36,8 +36,6 @@ public class SocketPresenter implements SocketContract.presenter {
 
     @Override
     public void getState() {
-//        String state = webSocketHelper.getState();
-//        view.showSocketState(state);
         webSocketHelper.getStateLiveData();
     }
 
