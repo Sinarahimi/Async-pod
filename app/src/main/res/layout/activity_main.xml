@@ -9,8 +9,33 @@
 
     <Button
         android:id="@+id/button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:text="click"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <Button
+        android:id="@+id/getState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="83dp"
+        android:text="getState"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button" />
+
+    <TextView
+        android:id="@+id/textViewstate"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="29dp"
+        tools:text="state"
+        app:layout_constraintStart_toStartOf="@+id/getState"
+        app:layout_constraintTop_toBottomOf="@+id/getState" />
 
 </android.support.constraint.ConstraintLayout>

@@ -1,10 +1,14 @@
 package ir.fanap.chat.sdk.application;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import ir.fanap.chat.sdk.bussines.networking.WebSocketHelper;
 
 public class SocketPresenter implements SocketContract.presenter {
+
 
     private WebSocketHelper webSocketHelper;
     private SocketContract.view view;
@@ -28,6 +32,19 @@ public class SocketPresenter implements SocketContract.presenter {
     @Override
     public void sendMessage(String textMessage) {
         webSocketHelper.sendMessage(textMessage);
+    }
+
+    @Override
+    public void getState() {
+//        String state = webSocketHelper.getState();
+//        view.showSocketState(state);
+        webSocketHelper.getStateLiveData();
+    }
+
+
+    @Override
+    public LiveData<String> getLiveData() {
+        return webSocketHelper.getStateLiveData();
     }
 
     @Override

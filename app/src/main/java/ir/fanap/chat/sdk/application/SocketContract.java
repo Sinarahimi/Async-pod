@@ -1,5 +1,7 @@
 package ir.fanap.chat.sdk.application;
 
+import android.arch.lifecycle.LiveData;
+
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFrame;
@@ -16,6 +18,10 @@ interface SocketContract {
         void showOnMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames);
 
         void showOnConnectError(WebSocket websocket, WebSocketException exception);
+
+        void showSocketState(String state);
+
+        void showLiveDataState(LiveData state);
     }
 
     interface presenter {
@@ -24,6 +30,10 @@ interface SocketContract {
         void connect(String socketServerAddress, String appId);
 
         void sendMessage(String textMessage);
+
+        void getState();
+
+        LiveData<String> getLiveData();
 
         void getErrorMessage();
     }

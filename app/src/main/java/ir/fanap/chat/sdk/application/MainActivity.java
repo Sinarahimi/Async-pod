@@ -1,9 +1,13 @@
 package ir.fanap.chat.sdk.application;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketException;
@@ -24,11 +28,27 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button button = findViewById(R.id.button);
+        Button getStateButton = findViewById(R.id.getState);
+
+        getStateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                socketPresenter.getState();
+            }
+        });
         socketPresenter = new SocketPresenter(this, this);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP");
+            }
+        });
+
+        socketPresenter.getLiveData().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String s) {
+                TextView textView = findViewById(R.id.textViewstate);
+                textView.setText(s);
             }
         });
     }
@@ -51,5 +71,19 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
     @Override
     public void showOnConnectError(WebSocket websocket, WebSocketException exception) {
 
+    }
+
+    @Override
+    public void showSocketState(String state) {
+
+    }
+
+    @Override
+    public void showLiveDataState(LiveData state) {
+
+    }
+
+    private void sendMessage(String textMessage) {
+        socketPresenter.sendMessage(textMessage);
     }
 }

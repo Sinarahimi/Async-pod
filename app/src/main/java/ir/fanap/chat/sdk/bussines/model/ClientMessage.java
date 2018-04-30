@@ -1,10 +1,16 @@
 package ir.fanap.chat.sdk.bussines.model;
 
-//Messages that send from server to client
-public class ClientMessage {
 /**
- * @Param senderId shows that the message was received from which device(Peer id)
- * */
+ * Messages that send from server to client
+ *
+ * {@param senderId } shows that the message was received from which device(Peer id)
+ * <p>
+ * {@param type }type of message
+ * {@param address} address of sender (if sender registered on your peer)
+ * {@param origin} origin of sender (if sender registered on your peer)
+ * {@param tracker}Id generate by platform (if message sent in sync mode)
+ */
+public class ClientMessage {
     private long id;
     private int type;
     private long senderMessageId;

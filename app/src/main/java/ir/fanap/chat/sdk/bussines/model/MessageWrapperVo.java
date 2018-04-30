@@ -1,7 +1,10 @@
 package ir.fanap.chat.sdk.bussines.model;
 
+    /**
+     * {@param type } type of message based on type of content
+     * {@param trackerId} tracker id of message that received from platform previously
+     */
 public class MessageWrapperVo {
-
     private int type;
     private String content;
     private long trackerId;
