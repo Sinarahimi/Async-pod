@@ -29,7 +29,14 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
         setContentView(R.layout.activity_main);
         Button button = findViewById(R.id.button);
         Button getStateButton = findViewById(R.id.getState);
+        Button closeButton = findViewById(R.id.buttonclosesocket);
 
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                socketPresenter.closeSocket();
+            }
+        });
         getStateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
 
     }
 
-    private void sendMessage(String textMessage) {
-        socketPresenter.sendMessage(textMessage);
+    private void sendMessage(String textMessage, int messageType) {
+        socketPresenter.sendMessage(textMessage, messageType);
     }
 }

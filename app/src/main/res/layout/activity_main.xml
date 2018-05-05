@@ -31,11 +31,21 @@
         android:id="@+id/textViewstate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:layout_marginStart="18dp"
         android:layout_marginTop="29dp"
-        tools:text="state"
+        android:gravity="center"
         app:layout_constraintStart_toStartOf="@+id/getState"
-        app:layout_constraintTop_toBottomOf="@+id/getState" />
+        app:layout_constraintTop_toBottomOf="@+id/getState"
+        tools:text="state" />
+
+    <Button
+        android:id="@+id/buttonclosesocket"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="114dp"
+        android:layout_marginTop="66dp"
+        android:text="close socket"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewstate" />
 
 </android.support.constraint.ConstraintLayout>

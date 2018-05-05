@@ -29,12 +29,14 @@ interface SocketContract {
 
         void connect(String socketServerAddress, String appId);
 
-        void sendMessage(String textMessage);
+        void sendMessage(String textMessage, int messageType);
 
         void getState();
 
         LiveData<String> getLiveData();
 
         void getErrorMessage();
+
+        void closeSocket();
     }
 }

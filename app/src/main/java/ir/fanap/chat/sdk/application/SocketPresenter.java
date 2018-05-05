@@ -9,11 +9,10 @@ import ir.fanap.chat.sdk.bussines.networking.WebSocketHelper;
 
 public class SocketPresenter implements SocketContract.presenter {
 
-
     private WebSocketHelper webSocketHelper;
     private SocketContract.view view;
 
-    public SocketPresenter(SocketContract.view view, Context context) {
+    SocketPresenter(SocketContract.view view, Context context) {
         this.view = view;
         webSocketHelper = WebSocketHelper.getInstance(context);
     }
@@ -30,8 +29,8 @@ public class SocketPresenter implements SocketContract.presenter {
     }
 
     @Override
-    public void sendMessage(String textMessage) {
-        webSocketHelper.sendMessage(textMessage);
+    public void sendMessage(String textMessage, int messageType) {
+        webSocketHelper.sendMessage(textMessage, messageType);
     }
 
     @Override
@@ -49,5 +48,10 @@ public class SocketPresenter implements SocketContract.presenter {
     public void getErrorMessage() {
         String error = webSocketHelper.getErrorMessage();
         view.showErrorMessage(error);
+    }
+
+    @Override
+    public void closeSocket() {
+        webSocketHelper.closeSocket();
     }
 }

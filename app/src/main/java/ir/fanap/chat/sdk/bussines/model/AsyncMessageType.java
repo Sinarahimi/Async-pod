@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 
 public class AsyncMessageType {
 
-    public final int messageType;
+    private final int messageType;
 
     public AsyncMessageType(@MessageType int messageType) {
         this.messageType = messageType;
