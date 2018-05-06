@@ -5,6 +5,7 @@ import android.arch.lifecycle.Observer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -62,7 +63,9 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
 
     @Override
     public void showMessage(String message) {
-
+        TextView textViewShowMessage = findViewById(R.id.textViewShowMessage);
+        textViewShowMessage.setText(message);
+        Log.d("message", message);
     }
 
     @Override

@@ -4,6 +4,7 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -17,6 +18,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -48,6 +50,7 @@ public class WebSocketHelper extends WebSocketAdapter {
     private MessageWrapperVo messageWrapperVo;
     private static Moshi moshi;
     private String errorMessage;
+    private long lastTimeMessage;
     private String message;
     private String state;
     private String appId;
@@ -55,6 +58,7 @@ public class WebSocketHelper extends WebSocketAdapter {
     private String deviceID;
     private MutableLiveData<String> stateLiveData = new MutableLiveData<>();
     private String serverAddress;
+    final Handler pingHandler = new Handler();
 
     private WebSocketHelper() {
     }
@@ -68,6 +72,9 @@ public class WebSocketHelper extends WebSocketAdapter {
         return instance;
     }
 
+    /**
+     * @param textMessage
+     */
 
     @Override
     public void onTextMessage(WebSocket websocket, String textMessage) throws Exception {
@@ -80,23 +87,26 @@ public class WebSocketHelper extends WebSocketAdapter {
         if (clientMessage != null) {
             type = clientMessage.getType();
         }
+        scheduleSendPing(10000);
+
         @AsyncMessageType.MessageType int currentMessageType = type;
         switch (currentMessageType) {
             case AsyncMessageType.MessageType.ACK:
                 setMessage(clientMessage.getContent());
                 break;
             case AsyncMessageType.MessageType.DEVICE_REGISTER:
+                isDeviceRegister = true;
                 String peerId = clientMessage.getContent();
                 if (!peerIdExistence()) {
                     savePeerId(peerId);
                 }
+                /*
+                  When socket closes by any reason
+                  , server is still registered and we sent a lot of message but
+                  they are still in the queue
 
-                /**
-                 * When socket closes by any reason
-                 * and server is still registered and we send a lot of message but
-                 * they are still in the queue
-                 *
-                 * */
+                  */
+                //TODO handle queue message
                 if (isServerRegister && peerId.equals(getPeerId())) {
                     if (websocket.getState() == OPEN) {
                         if (websocket.getFrameQueueSize() > 0) {
@@ -105,17 +115,17 @@ public class WebSocketHelper extends WebSocketAdapter {
                     }
 
                 } else {
-                    /**
-                     * Register server when its not registered
-                     * */
+                    /*
+                      Register server when its not registered
+                      */
                     RegistrationRequest registrationRequest = new RegistrationRequest();
                     registrationRequest.setName("oauth-wire");
                     JsonAdapter<RegistrationRequest> jsonRegistrationRequestVoAdapter = moshi.adapter(RegistrationRequest.class);
                     String jsonRegistrationRequestVo = jsonRegistrationRequestVoAdapter.toJson(registrationRequest);
                     String jsonMessageWrapperVo = getMessageWrapper(moshi, jsonRegistrationRequestVo, AsyncMessageType.MessageType.SERVER_REGISTER);
                     websocket.sendText(jsonMessageWrapperVo);
+                    lastTimeMessage = new Date().getTime();
                 }
-
                 break;
             case AsyncMessageType.MessageType.ERROR_MESSAGE:
                 Log.e(TAG, clientMessage.getContent());
@@ -130,6 +140,7 @@ public class WebSocketHelper extends WebSocketAdapter {
                 String jsonMessage = jsonMessageAdapter.toJson(message);
                 String jsonMessageWrapper = getMessageWrapper(moshi, jsonMessage, AsyncMessageType.MessageType.ACK);
                 websocket.sendText(jsonMessageWrapper);
+                lastTimeMessage = new Date().getTime();
                 break;
             case AsyncMessageType.MessageType.MESSAGE_SENDER_ACK_NEEDED:
                 setMessage(clientMessage.getContent());
@@ -140,12 +151,12 @@ public class WebSocketHelper extends WebSocketAdapter {
                 String jsonSenderAckNeeded = jsonSenderAckNeededAdapter.toJson(messageSenderAckNeeded);
                 String jsonSenderAckNeededWrapper = getMessageWrapper(moshi, jsonSenderAckNeeded, AsyncMessageType.MessageType.ACK);
                 websocket.sendText(jsonSenderAckNeededWrapper);
+                lastTimeMessage = new Date().getTime();
                 break;
             case AsyncMessageType.MessageType.MESSAGE:
                 setMessage(clientMessage.getContent());
                 break;
             case AsyncMessageType.MessageType.PEER_REMOVED:
-
                 break;
             case AsyncMessageType.MessageType.PING:
                 if (!isDeviceRegister) {
@@ -160,15 +171,15 @@ public class WebSocketHelper extends WebSocketAdapter {
                     String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfo);
                     String jsonPeerInfoWrapper = getMessageWrapper(moshi, peerMessageJson, AsyncMessageType.MessageType.DEVICE_REGISTER);
                     websocket.sendText(jsonPeerInfoWrapper);
-
+                    lastTimeMessage = new Date().getTime();
                 } else {
-                    websocket.sendPing();
+                    scheduleSendPing(50000);
                 }
                 break;
             case AsyncMessageType.MessageType.SERVER_REGISTER:
-                Log.i("Ready for ping", textMessage);
+                Log.i("Ready for chat", textMessage);
                 isServerRegister = true;
-                websocket.setPingInterval(2 * 1000);
+                scheduleSendPing(10000);
                 break;
         }
     }
@@ -202,18 +213,22 @@ public class WebSocketHelper extends WebSocketAdapter {
     }
 
     /**
-     * After error event its start reconnecting again
+     * After error event its start reconnecting again.
+     * Note that you should not trigger reconnection in onError() method because onError()
+     * may be called multiple times due to one error.
+     * Instead, onDisconnected() is the right place to trigger reconnection.
      */
     @Override
     public void onMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames) throws Exception {
         super.onMessageError(websocket, cause, frames);
         Log.e("onMessageError", cause.toString());
-        reConnect();
+//        reConnect();
     }
 
     @Override
     public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
         super.onDisconnected(websocket, serverCloseFrame, clientCloseFrame, closedByServer);
+        reConnect();
     }
 
     @Override
@@ -231,19 +246,8 @@ public class WebSocketHelper extends WebSocketAdapter {
         try {
             webSocket = webSocketFactory
                     .setConnectionTimeout(TIMEOUT)
-                    .createSocket(socketServerAddress).setPingInterval(3 * 1000)
+                    .createSocket(socketServerAddress)
                     .addListener(this);
-//
-//            webSocket.setPingPayloadGenerator(new PayloadGenerator() {
-//                @Override
-//                public byte[] generate() {
-//                    String deviceId = getUniqueID();
-//                    PeerMessage PeerMessage = new PeerMessage();
-//                    PeerMessage.setAppId(appId);
-//                    PeerMessage.setDeviceId(deviceId);
-//                    return new byte[0];
-//                }
-//            });
             webSocket.connectAsynchronously();
         } catch (IOException e) {
             e.printStackTrace();
@@ -266,6 +270,7 @@ public class WebSocketHelper extends WebSocketAdapter {
         String jsonMessage = jsonAdapter.toJson(message);
         String wrapperJsonString = getMessageWrapper(moshi, jsonMessage, messageType);
         webSocket.sendText(wrapperJsonString);
+        lastTimeMessage = new Date().getTime();
     }
 
     //  it's (relatively) easily resettable because it only persists as long as the app is installed.
@@ -307,6 +312,7 @@ public class WebSocketHelper extends WebSocketAdapter {
             String jason = jsonPeerMessageAdapter.toJson(peerInfo);
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
             webSocket.sendText(message);
+            lastTimeMessage = new Date().getTime();
         } else {
             PeerInfo peerInfo = new PeerInfo();
             peerInfo.setAppId(getAppId());
@@ -316,11 +322,13 @@ public class WebSocketHelper extends WebSocketAdapter {
             String jason = jsonPeerMessageAdapter.toJson(peerInfo);
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
             webSocket.sendText(message);
+            lastTimeMessage = new Date().getTime();
         }
     }
 
     /**
      * Remove the peerId and send ping again but this time
+     * peerId in the server is removed
      */
     public void logOut() {
         SharedPreferences.Editor editor = sharedPrefs.edit();
@@ -331,15 +339,43 @@ public class WebSocketHelper extends WebSocketAdapter {
         webSocketConnect(getServerAddress(), getAppId());
     }
 
+    /**
+     * When its send message the lastTimeMessage gets updated.
+     * if the {@param currentTime} - {@param lastTimeMessage} was bigger than 10 second
+     * it means we need to send ping to keep socket alive.
+     * we don't need to set ping interval because its send ping automatically by itself
+     * with the {@param type}type that not 0.
+     * We set {@param type = 0} with empty content.
+     */
+    private void sendPing() {
+        long currentTime = new Date().getTime();
+        if (currentTime - lastTimeMessage > 10000) {
+            message = getMessageWrapper(moshi, "", AsyncMessageType.MessageType.PING);
+            webSocket.sendText(message);
+            lastTimeMessage = new Date().getTime();
+        }
+    }
+
+    private void scheduleSendPing(int delayTime) {
+        pingHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                sendPing();
+                pingHandler.postDelayed(this, 10000);
+            }
+        }, delayTime);
+    }
+
+    private void stopPing() {
+        webSocket.sendClose();
+        pingHandler.removeCallbacksAndMessages(null);
+    }
+
     private boolean peerIdExistence() {
         boolean isPeerIdExistence;
         String peerId = sharedPrefs.getString(AsyncConstant.Constants.PEER_ID, null);
         setPeerId(peerId);
-        if (peerId == null) {
-            isPeerIdExistence = false;
-        } else {
-            isPeerIdExistence = true;
-        }
+        isPeerIdExistence = peerId != null;
         return isPeerIdExistence;
     }
 
@@ -356,8 +392,7 @@ public class WebSocketHelper extends WebSocketAdapter {
     }
 
     private String getDeviceId() {
-        String deviceiD = sharedPrefs.getString(AsyncConstant.Constants.DEVICE_ID, null);
-        return deviceiD;
+        return sharedPrefs.getString(AsyncConstant.Constants.DEVICE_ID, null);
     }
 
     public void setDeviceID(String deviceID) {
@@ -368,7 +403,7 @@ public class WebSocketHelper extends WebSocketAdapter {
         return peerId;
     }
 
-    public void setPeerId(String peerId) {
+    private void setPeerId(String peerId) {
         this.peerId = peerId;
     }
 
@@ -408,7 +443,7 @@ public class WebSocketHelper extends WebSocketAdapter {
         return serverAddress;
     }
 
-    public void setServerAddress(String serverAddress) {
+    private void setServerAddress(String serverAddress) {
         this.serverAddress = serverAddress;
     }
 }
