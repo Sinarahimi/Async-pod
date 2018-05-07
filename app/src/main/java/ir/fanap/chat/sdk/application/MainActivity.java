@@ -3,6 +3,7 @@ package ir.fanap.chat.sdk.application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -35,7 +36,13 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                socketPresenter.closeSocket();
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        socketPresenter.closeSocket();
+                    }
+                },3000);
             }
         });
         getStateButton.setOnClickListener(new View.OnClickListener() {

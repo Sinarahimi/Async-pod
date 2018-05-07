@@ -41,6 +41,7 @@ public class WebSocketHelper extends WebSocketAdapter {
      * and for secure WebSocket connections (wss:).
      */
     private WebSocket webSocket;
+    private WebSocket webSocketReconnect;
     private static final String TAG = "WebSocketHelper" + " ";
     private static WebSocketHelper instance;
     private static String uniqueID = null;
@@ -52,10 +53,12 @@ public class WebSocketHelper extends WebSocketAdapter {
     private String errorMessage;
     private long lastTimeMessage;
     private String message;
+    private String onError;
     private String state;
     private String appId;
     private String peerId;
     private String deviceID;
+    private Exception onConnectException;
     private MutableLiveData<String> stateLiveData = new MutableLiveData<>();
     private String serverAddress;
     final Handler pingHandler = new Handler();
@@ -197,14 +200,17 @@ public class WebSocketHelper extends WebSocketAdapter {
         super.onError(websocket, cause);
         Log.e("onError", cause.toString());
         cause.getCause().printStackTrace();
-        reConnect();
+        setOnError(cause.toString());
     }
+
 
     @Override
     public void onConnectError(WebSocket websocket, WebSocketException exception) throws Exception {
         super.onConnectError(websocket, exception);
         Log.e("onConnected", exception.toString());
+        setonConnectError(exception);
     }
+
 
     @Override
     public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
@@ -222,7 +228,6 @@ public class WebSocketHelper extends WebSocketAdapter {
     public void onMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames) throws Exception {
         super.onMessageError(websocket, cause, frames);
         Log.e("onMessageError", cause.toString());
-//        reConnect();
     }
 
     @Override
@@ -302,7 +307,18 @@ public class WebSocketHelper extends WebSocketAdapter {
      * get the new PeerId
      */
     private void reConnect() {
+        WebSocketFactory webSocketFactory = new WebSocketFactory();
+        webSocketFactory.setVerifyHostname(false);
         String message;
+        try {
+            webSocketReconnect = webSocketFactory
+                    .setConnectionTimeout(TIMEOUT)
+                    .createSocket(getServerAddress())
+                    .addListener(this);
+            webSocketReconnect.connectAsynchronously();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         if (peerIdExistence()) {
             PeerInfo peerInfo = new PeerInfo();
             peerInfo.setAppId(getAppId());
@@ -311,7 +327,8 @@ public class WebSocketHelper extends WebSocketAdapter {
             JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
             String jason = jsonPeerMessageAdapter.toJson(peerInfo);
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
-            webSocket.sendText(message);
+            webSocketReconnect.sendText(message);
+            isDeviceRegister = false;
             lastTimeMessage = new Date().getTime();
         } else {
             PeerInfo peerInfo = new PeerInfo();
@@ -321,7 +338,8 @@ public class WebSocketHelper extends WebSocketAdapter {
             JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
             String jason = jsonPeerMessageAdapter.toJson(peerInfo);
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
-            webSocket.sendText(message);
+            webSocketReconnect.sendText(message);
+            isDeviceRegister = false;
             lastTimeMessage = new Date().getTime();
         }
     }
@@ -339,12 +357,14 @@ public class WebSocketHelper extends WebSocketAdapter {
         webSocketConnect(getServerAddress(), getAppId());
     }
 
+
     /**
      * When its send message the lastTimeMessage gets updated.
      * if the {@param currentTime} - {@param lastTimeMessage} was bigger than 10 second
      * it means we need to send ping to keep socket alive.
      * we don't need to set ping interval because its send ping automatically by itself
      * with the {@param type}type that not 0.
+     * We set {@param type = 0} with empty content.
      * We set {@param type = 0} with empty content.
      */
     private void sendPing() {
@@ -379,12 +399,14 @@ public class WebSocketHelper extends WebSocketAdapter {
         return isPeerIdExistence;
     }
 
+    //Save peerId in the SharedPreferences
     private void savePeerId(String peerId) {
         SharedPreferences.Editor editor = sharedPrefs.edit();
         editor.putString(AsyncConstant.Constants.PEER_ID, peerId);
         editor.apply();
     }
 
+    //Save deviceId in the SharedPreferences
     private void saveDeviceId(String deviceId) {
         SharedPreferences.Editor editor = sharedPrefs.edit();
         editor.putString(AsyncConstant.Constants.DEVICE_ID, deviceId);
@@ -445,6 +467,22 @@ public class WebSocketHelper extends WebSocketAdapter {
 
     private void setServerAddress(String serverAddress) {
         this.serverAddress = serverAddress;
+    }
+
+    private void setOnError(String onError) {
+        this.onError = onError;
+    }
+
+    public String getOnError() {
+        return onError;
+    }
+
+    private void setonConnectError(Exception exception) {
+        this.onConnectException = exception;
+    }
+
+    public Exception getOnConnectError() {
+        return onConnectException;
     }
 }
 
