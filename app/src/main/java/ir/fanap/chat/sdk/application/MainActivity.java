@@ -32,6 +32,14 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
         Button button = findViewById(R.id.button);
         Button getStateButton = findViewById(R.id.getState);
         Button closeButton = findViewById(R.id.buttonclosesocket);
+        Button buttonLogOut = findViewById(R.id.buttonLogOut);
+
+        buttonLogOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
 
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override

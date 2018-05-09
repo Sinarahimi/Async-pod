@@ -38,6 +38,11 @@ public class SocketPresenter implements SocketContract.presenter {
         webSocketHelper.getStateLiveData();
     }
 
+    @Override
+    public void logOut() {
+        webSocketHelper.logOut();
+    }
+
 
     @Override
     public LiveData<String> getLiveData() {

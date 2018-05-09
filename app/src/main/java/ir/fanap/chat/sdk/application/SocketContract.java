@@ -33,6 +33,8 @@ interface SocketContract {
 
         void getState();
 
+        void logOut();
+
         LiveData<String> getLiveData();
 
         void getErrorMessage();

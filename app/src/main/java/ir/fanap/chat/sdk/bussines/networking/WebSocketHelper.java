@@ -211,7 +211,6 @@ public class WebSocketHelper extends WebSocketAdapter {
         setonConnectError(exception);
     }
 
-
     @Override
     public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
         super.onConnected(websocket, headers);
@@ -302,8 +301,8 @@ public class WebSocketHelper extends WebSocketAdapter {
     }
 
     /**
-     * If peerIdExistence we send refresh to the
-     * Async else we send renew to the Async to
+     * If peerIdExistence we set {@param refresh = true} to the
+     * Async else we set {@param renew = true}  to the Async to
      * get the new PeerId
      */
     private void reConnect() {
@@ -346,7 +345,7 @@ public class WebSocketHelper extends WebSocketAdapter {
 
     /**
      * Remove the peerId and send ping again but this time
-     * peerId in the server is removed
+     * peerId that was set in the server was removed
      */
     public void logOut() {
         SharedPreferences.Editor editor = sharedPrefs.edit();
@@ -356,7 +355,6 @@ public class WebSocketHelper extends WebSocketAdapter {
         isDeviceRegister = false;
         webSocketConnect(getServerAddress(), getAppId());
     }
-
 
     /**
      * When its send message the lastTimeMessage gets updated.
