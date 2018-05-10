@@ -6,6 +6,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+
 import static org.mockito.Mockito.verify;
 
 public class SocketPresenterTest {
@@ -18,6 +20,9 @@ public class SocketPresenterTest {
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        //TODO what should i do with context that socket presenter need
+//        socketPresenter = new SocketPresenter(view,)
     }
 
     @After
@@ -34,7 +39,6 @@ public class SocketPresenterTest {
     @Test
     public void sendMessage() {
         socketPresenter.sendMessage("this is test", 3);
-
 
     }
 

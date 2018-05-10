@@ -17,11 +17,14 @@ import com.neovisionaries.ws.client.WebSocketFrame;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import ir.fanap.chat.sdk.R;
 
 public class MainActivity extends AppCompatActivity implements SocketContract.view {
 
     //("ws://172.16.110.235:8003/ws", "UIAPP")
+    @Inject
     SocketPresenter socketPresenter;
     private static final String SOCKET_SERVER = "ws://172.16.110.235:8003/ws";
 
@@ -59,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
                 socketPresenter.getState();
             }
         });
-        socketPresenter = new SocketPresenter(this, this);
+//        socketPresenter = new SocketPresenter(this, this);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
