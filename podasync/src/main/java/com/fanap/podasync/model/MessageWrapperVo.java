@@ -1,4 +1,4 @@
-package ir.fanap.chat.sdk.bussines.model;
+package com.fanap.podasync.model;
 
     /**
      * {@param type } type of message based on type of content

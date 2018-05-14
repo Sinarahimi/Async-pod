@@ -1,13 +1,21 @@
-package ir.fanap.chat.sdk.bussines.networking;
+package com.fanap.podasync.networking;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.fanap.podasync.model.AsyncConstant;
+import com.fanap.podasync.model.AsyncMessageType;
+import com.fanap.podasync.model.ClientMessage;
+import com.fanap.podasync.model.Message;
+import com.fanap.podasync.model.MessageWrapperVo;
+import com.fanap.podasync.model.PeerInfo;
+import com.fanap.podasync.model.RegistrationRequest;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
@@ -23,17 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import ir.fanap.chat.sdk.bussines.model.AsyncConstant;
-import ir.fanap.chat.sdk.bussines.model.AsyncMessageType;
-import ir.fanap.chat.sdk.bussines.model.ClientMessage;
-import ir.fanap.chat.sdk.bussines.model.Message;
-import ir.fanap.chat.sdk.bussines.model.MessageWrapperVo;
-import ir.fanap.chat.sdk.bussines.model.PeerInfo;
-import ir.fanap.chat.sdk.bussines.model.RegistrationRequest;
-
 import static com.neovisionaries.ws.client.WebSocketState.OPEN;
 
-public class WebSocketHelper extends WebSocketAdapter {
+public class Async extends WebSocketAdapter {
 
     private static final int TIMEOUT = 5000;
     /**
@@ -42,8 +42,8 @@ public class WebSocketHelper extends WebSocketAdapter {
      */
     private WebSocket webSocket;
     private WebSocket webSocketReconnect;
-    private static final String TAG = "WebSocketHelper" + " ";
-    private static WebSocketHelper instance;
+    private static final String TAG = "Async" + " ";
+    private static Async instance;
     private static String uniqueID = null;
     private boolean isServerRegister = false;
     private boolean isDeviceRegister = false;
@@ -61,16 +61,16 @@ public class WebSocketHelper extends WebSocketAdapter {
     private Exception onConnectException;
     private MutableLiveData<String> stateLiveData = new MutableLiveData<>();
     private String serverAddress;
-    final Handler pingHandler = new Handler();
+    final Handler pingHandler = new Handler(Looper.getMainLooper());
 
-    private WebSocketHelper() {
+    private Async() {
     }
 
-    public static WebSocketHelper getInstance(Context context) {
+    public static Async getInstance(Context context) {
         if (instance == null) {
             sharedPrefs = context.getSharedPreferences(AsyncConstant.Constants.PREFERENCE, Context.MODE_PRIVATE);
             moshi = new Moshi.Builder().build();
-            instance = new WebSocketHelper();
+            instance = new Async();
         }
         return instance;
     }
@@ -191,7 +191,7 @@ public class WebSocketHelper extends WebSocketAdapter {
     public void onStateChanged(WebSocket websocket, WebSocketState newState) throws Exception {
         super.onStateChanged(websocket, newState);
         stateLiveData.postValue(newState.toString());
-        setState(state);
+        setState(newState.toString());
         Log.i("onStateChanged", newState.toString());
     }
 
@@ -202,7 +202,6 @@ public class WebSocketHelper extends WebSocketAdapter {
         cause.getCause().printStackTrace();
         setOnError(cause.toString());
     }
-
 
     @Override
     public void onConnectError(WebSocket websocket, WebSocketException exception) throws Exception {

@@ -1,4 +1,4 @@
-package ir.fanap.chat.sdk.bussines.model;
+package com.fanap.podasync.model;
 
 /**
  * Messages that send from server to client

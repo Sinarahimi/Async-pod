@@ -1,62 +1,77 @@
 package ir.fanap.chat.sdk.application;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
-import android.support.annotation.Nullable;
 
-import ir.fanap.chat.sdk.bussines.networking.WebSocketHelper;
+import com.fanap.podasync.networking.Async;
 
 public class SocketPresenter implements SocketContract.presenter {
 
-    private WebSocketHelper webSocketHelper;
+    private Async async;
     private SocketContract.view view;
 
-    SocketPresenter(SocketContract.view view, Context context) {
+    public SocketPresenter(SocketContract.view view, Context context) {
         this.view = view;
-        webSocketHelper = WebSocketHelper.getInstance(context);
+        async = Async.getInstance(context);
     }
 
     @Override
-    public void getMessage() {
-        String message = webSocketHelper.getMessage();
+    public String getMessage() {
+        String message = async.getMessage();
         view.showMessage(message);
+        return message;
     }
 
     @Override
     public void connect(String socketServerAddress, String appId) {
-        webSocketHelper.webSocketConnect(socketServerAddress, appId);
+        async.webSocketConnect(socketServerAddress, appId);
     }
 
     @Override
     public void sendMessage(String textMessage, int messageType) {
-        webSocketHelper.sendMessage(textMessage, messageType);
+        async.sendMessage(textMessage, messageType);
     }
 
     @Override
-    public void getState() {
-        webSocketHelper.getStateLiveData();
+    public void getLiveState() {
+        async.getStateLiveData();
+    }
+
+    @Override
+    public String getState() {
+        return async.getState();
+    }
+
+    @Override
+    public boolean isSocketOpen() {
+        boolean isSocketOpen = false;
+        if ((async.getState()) != null) {
+            if (async.getState().equals("OPEN")) {
+                isSocketOpen = true;
+            }
+        }
+        return isSocketOpen;
     }
 
     @Override
     public void logOut() {
-        webSocketHelper.logOut();
+        async.logOut();
     }
 
 
     @Override
     public LiveData<String> getLiveData() {
-        return webSocketHelper.getStateLiveData();
+        return async.getStateLiveData();
     }
 
     @Override
     public void getErrorMessage() {
-        String error = webSocketHelper.getErrorMessage();
+        String error = async.getErrorMessage();
         view.showErrorMessage(error);
     }
 
     @Override
     public void closeSocket() {
-        webSocketHelper.closeSocket();
+        async.closeSocket();
     }
 }

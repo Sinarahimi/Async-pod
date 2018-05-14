@@ -26,36 +26,25 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
-
-    implementation 'com.squareup.moshi:moshi:1.5.0'
-    implementation 'com.neovisionaries:nv-websocket-client:2.3'
     implementation 'com.android.support:support-annotations:27.1.1'
-
-    // Dependencies for local unit tests
     testImplementation "junit:junit:$rootProject.ext.junitVersion"
+
+    // Dependencies for mockito
     testImplementation 'org.mockito:mockito-core:2.7.22'
+    androidTestImplementation 'org.mockito:mockito-android:2.6.1'
     testImplementation "org.mockito:mockito-all:$rootProject.ext.mockitoVersion"
     testImplementation "org.hamcrest:hamcrest-all:$rootProject.ext.hamcrestVersion"
     testImplementation "org.powermock:powermock-module-junit4:$rootProject.ext.powerMockito"
     testImplementation "org.powermock:powermock-api-mockito:$rootProject.ext.powerMockito"
 
     // Android Testing Support Library's runner and rules
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation "com.android.support.test:runner:$rootProject.ext.runnerVersion"
+    androidTestImplementation "com.android.support.test:rules:$rootProject.ext.rulesVersion"
 
     // Espresso UI Testing dependencies.
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
-    //Dagger 2
-    implementation "com.google.dagger:dagger:$rootProject.ext.dagger2Version"
-    implementation "com.google.dagger:dagger-android:$rootProject.ext.dagger2Version"
-    implementation "com.google.dagger:dagger-android-support:$rootProject.ext.dagger2Version"
-    annotationProcessor "com.google.dagger:dagger-android-processor:$rootProject.ext.dagger2Version"
-    annotationProcessor "com.google.dagger:dagger-compiler:$rootProject.ext.dagger2Version"
-
-
-    implementation 'android.arch.lifecycle:extensions:1.1.1'
-    annotationProcessor 'android.arch.lifecycle:compiler:1.1.1'
+    implementation project(':podasync')
 }

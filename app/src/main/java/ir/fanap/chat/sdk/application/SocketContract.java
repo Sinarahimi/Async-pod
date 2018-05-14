@@ -2,13 +2,7 @@ package ir.fanap.chat.sdk.application;
 
 import android.arch.lifecycle.LiveData;
 
-import com.neovisionaries.ws.client.WebSocket;
-import com.neovisionaries.ws.client.WebSocketException;
-import com.neovisionaries.ws.client.WebSocketFrame;
-
-import java.util.List;
-
-interface SocketContract {
+public interface SocketContract {
 
     interface view {
         void showMessage(String message);
@@ -25,13 +19,15 @@ interface SocketContract {
     }
 
     interface presenter {
-        void getMessage();
+        String getMessage();
 
         void connect(String socketServerAddress, String appId);
 
         void sendMessage(String textMessage, int messageType);
 
-        void getState();
+        void getLiveState();
+
+        String getState();
 
         void logOut();
 
@@ -40,5 +36,7 @@ interface SocketContract {
         void getErrorMessage();
 
         void closeSocket();
+
+        boolean isSocketOpen();
     }
 }

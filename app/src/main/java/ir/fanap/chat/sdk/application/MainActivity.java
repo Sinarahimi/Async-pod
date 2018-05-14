@@ -10,21 +10,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import com.neovisionaries.ws.client.WebSocket;
-import com.neovisionaries.ws.client.WebSocketException;
-import com.neovisionaries.ws.client.WebSocketFrame;
-
-import java.util.List;
-
-import javax.inject.Inject;
+import android.widget.Toast;
 
 import ir.fanap.chat.sdk.R;
 
 public class MainActivity extends AppCompatActivity implements SocketContract.view {
 
     //("ws://172.16.110.235:8003/ws", "UIAPP")
-    @Inject
+//    @Inject
     SocketPresenter socketPresenter;
     private static final String SOCKET_SERVER = "ws://172.16.110.235:8003/ws";
 
@@ -36,11 +29,12 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
         Button getStateButton = findViewById(R.id.getState);
         Button closeButton = findViewById(R.id.buttonclosesocket);
         Button buttonLogOut = findViewById(R.id.buttonLogOut);
+        socketPresenter = new SocketPresenter(this, this);
 
         buttonLogOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+               Toast.makeText(MainActivity.this,Boolean.toString(socketPresenter.isSocketOpen()),Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -56,13 +50,13 @@ public class MainActivity extends AppCompatActivity implements SocketContract.vi
                 },3000);
             }
         });
+
         getStateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                socketPresenter.getState();
+                socketPresenter.getLiveState();
             }
         });
-//        socketPresenter = new SocketPresenter(this, this);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
