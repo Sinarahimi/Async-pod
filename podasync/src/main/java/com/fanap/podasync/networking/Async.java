@@ -63,7 +63,7 @@ public class Async extends WebSocketAdapter {
     private String serverAddress;
     final Handler pingHandler = new Handler(Looper.getMainLooper());
 
-    private Async() {
+    public Async() {
     }
 
     public static Async getInstance(Context context) {

@@ -2,6 +2,12 @@ package ir.fanap.chat.sdk.application;
 
 import android.arch.lifecycle.LiveData;
 
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketException;
+import com.neovisionaries.ws.client.WebSocketFrame;
+
+import java.util.List;
+
 public interface SocketContract {
 
     interface view {

@@ -58,7 +58,6 @@ public class SocketPresenter implements SocketContract.presenter {
         async.logOut();
     }
 
-
     @Override
     public LiveData<String> getLiveData() {
         return async.getStateLiveData();
