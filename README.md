@@ -9,7 +9,7 @@ This library allows you to connect to **Pod-Async** and use their services.
 ### Prerequisites
 
 What things you need to Add this module to your project and after that set the `internet` permision in the manifest.
-Then you need to getInstance of the Async library in the `Oncrete()`.
+ The first step is to create Async instance.
 
 
 ``` @Override
