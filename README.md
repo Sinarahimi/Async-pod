@@ -20,35 +20,6 @@ Then you need to getInstance of the Async library in the `Oncrete()`.
         Async async = Async.getInstance(context);
 ```
 
-## Code Example
-
-```
- String getMessage();
-
-        void connect(String socketServerAddress, String appId);
-
-        void ;
-
-        void getLiveState();
-
-        String getState();
-
-        void logOut();
-
-        LiveData<String> getLiveData();
-
-        void getErrorMessage();
-
-        void closeSocket();
-
-        boolean isSocketOpen();
-
-        String getPeerId();
-```
-
-
-Explain how to run the automated tests for this system
-
 #The table below is the list of  methods defined in Async class
 
 | Method                        | Description                                          |
@@ -85,8 +56,4 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
 
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
