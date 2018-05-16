@@ -8,45 +8,64 @@ This library allows you to connect to **Pod-Async** and use their services.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+What things you need to Add this module to your project and after that set the `internet` permision in the manifest.
+Then you need to getInstance of the Async library in the `Oncrete()`.
+
+
+``` @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Async async = Async.getInstance(context);
+```
+
+## Code Example
 
 ```
-Give examples
+ String getMessage();
+
+        void connect(String socketServerAddress, String appId);
+
+        void ;
+
+        void getLiveState();
+
+        String getState();
+
+        void logOut();
+
+        LiveData<String> getLiveData();
+
+        void getErrorMessage();
+
+        void closeSocket();
+
+        boolean isSocketOpen();
+
+        String getPeerId();
 ```
 
-### Installing
-
-
-
-## Running the tests
 
 Explain how to run the automated tests for this system
 
-### Break down into end to end tests
+#The table below is the list of  methods defined in Async class
 
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
+| Method                        | Description                                          |
+|:------------------------------|:-----------------------------------------------------|
+| `connect(String socketServerAddress, String appId)`         | Called when an `onXxx()` method threw a `Throwable`. |
+| `sendMessage(String textMessage, int messageType)`               | Called when a binary frame was received.             |
+| `getLiveState()`             | Called when a binary message was received.           |
+| `getState()`                | Called when a close frame was received.              |
+| `getErrorMessage()`                 | Called after the opening handshake succeeded.        |
+| `isSocketOpen()`              | Called when `connectAsynchronously()` failed.        |
+| `getPeerId()`         | Called when a continuation frame was received.       |
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [moshi](https://github.com/square/moshi) - Moshi
+* [websocket-client](https://github.com/TakahikoKawasaki/nv-websocket-client) - Websocket
+* [lifecycle](https://developer.android.com/reference/android/arch/lifecycle/LiveData) - LiveData
 
 ## Contributing
 
