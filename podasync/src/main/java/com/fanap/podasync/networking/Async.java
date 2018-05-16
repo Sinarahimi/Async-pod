@@ -443,8 +443,8 @@ public class Async extends WebSocketAdapter {
         this.deviceID = deviceID;
     }
 
-    private String getPeerId() {
-        return peerId;
+    public String getPeerId() {
+        return sharedPrefs.getString(AsyncConstant.Constants.PEER_ID, null);
     }
 
     private void setPeerId(String peerId) {

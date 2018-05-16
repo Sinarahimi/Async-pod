@@ -54,6 +54,11 @@ public class SocketPresenter implements SocketContract.presenter {
     }
 
     @Override
+    public String getPeerId() {
+        return async.getPeerId();
+    }
+
+    @Override
     public void logOut() {
         async.logOut();
     }

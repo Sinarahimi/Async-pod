@@ -26,15 +26,19 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
 //    @Inject
     SocketPresenter socketPresenter;
     private static final String SOCKET_SERVER = "ws://172.16.110.235:8003/ws";
-
+    Button button;
+    Button getStateButton;
+    Button closeButton;
+    TextView textViewPeerId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button button = findViewById(R.id.button);
-        Button getStateButton = findViewById(R.id.getState);
-        Button closeButton = findViewById(R.id.buttonclosesocket);
+
+        init();
+
         socketPresenter = new SocketPresenter(this, this);
+        textViewPeerId.setText(socketPresenter.getPeerId());
 
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -45,7 +49,7 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
                     public void run() {
                         socketPresenter.closeSocket();
                     }
-                },3000);
+                }, 3000);
             }
         });
 
@@ -69,6 +73,13 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
                 textView.setText(s);
             }
         });
+    }
+
+    private void init() {
+        button = findViewById(R.id.button);
+        getStateButton = findViewById(R.id.getState);
+        closeButton = findViewById(R.id.buttonclosesocket);
+        textViewPeerId = findViewById(R.id.textViewPeerId);
     }
 
     @Override

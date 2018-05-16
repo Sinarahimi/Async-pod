@@ -67,4 +67,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewstate" />
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:text="PeerId"
+        app:layout_constraintStart_toStartOf="@+id/textViewstate"
+        app:layout_constraintTop_toBottomOf="@+id/textViewstate" />
+
+    <TextView
+        android:id="@+id/textViewPeerId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="48dp"
+        android:layout_marginStart="49dp"
+        tools:text="25054"
+        app:layout_constraintEnd_toEndOf="@+id/textViewShowMessage"
+        app:layout_constraintStart_toStartOf="@+id/buttonclosesocket"
+        app:layout_constraintTop_toBottomOf="@+id/textViewstate" />
+
 </android.support.constraint.ConstraintLayout>

@@ -44,5 +44,7 @@ public interface SocketContract {
         void closeSocket();
 
         boolean isSocketOpen();
+
+        String getPeerId();
     }
 }
