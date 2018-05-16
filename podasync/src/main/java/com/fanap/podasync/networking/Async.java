@@ -36,6 +36,8 @@ import static com.neovisionaries.ws.client.WebSocketState.OPEN;
 public class Async extends WebSocketAdapter {
 
     private static final int TIMEOUT = 5000;
+    private static final int THRESHOLD = 20000;
+    public static final int SOCKET_CLOSE_TIMEOUT = 110000;
     /**
      * By default WebSocketFactory uses for non-secure WebSocket connections (ws:)
      * and for secure WebSocket connections (wss:).
@@ -51,7 +53,8 @@ public class Async extends WebSocketAdapter {
     private MessageWrapperVo messageWrapperVo;
     private static Moshi moshi;
     private String errorMessage;
-    private long lastTimeMessage;
+    private long lastSendMessageTime;
+    private long lastReceiveMessageTime;
     private String message;
     private String onError;
     private String state;
@@ -81,17 +84,18 @@ public class Async extends WebSocketAdapter {
 
     @Override
     public void onTextMessage(WebSocket websocket, String textMessage) throws Exception {
+        int type = 0;
         super.onTextMessage(websocket, textMessage);
+        Log.i("onTextMessage", textMessage);
+        lastReceiveMessageTime = new Date().getTime();
+
         JsonAdapter<ClientMessage> jsonAdapter = moshi.adapter(ClientMessage.class);
         ClientMessage clientMessage = jsonAdapter.fromJson(textMessage);
-        Log.i("onTextMessage", textMessage);
-
-        int type = 0;
         if (clientMessage != null) {
             type = clientMessage.getType();
         }
-        scheduleSendPing(10000);
 
+        scheduleSendPing(70000);
         @AsyncMessageType.MessageType int currentMessageType = type;
         switch (currentMessageType) {
             case AsyncMessageType.MessageType.ACK:
@@ -103,12 +107,12 @@ public class Async extends WebSocketAdapter {
                 if (!peerIdExistence()) {
                     savePeerId(peerId);
                 }
-                /*
-                  When socket closes by any reason
-                  , server is still registered and we sent a lot of message but
-                  they are still in the queue
+                /**
+                 When socket closes by any reason
+                 , server is still registered and we sent a lot of message but
+                 they are still in the queue
 
-                  */
+                 */
                 //TODO handle queue message
                 if (isServerRegister && peerId.equals(getPeerId())) {
                     if (websocket.getState() == OPEN) {
@@ -127,7 +131,6 @@ public class Async extends WebSocketAdapter {
                     String jsonRegistrationRequestVo = jsonRegistrationRequestVoAdapter.toJson(registrationRequest);
                     String jsonMessageWrapperVo = getMessageWrapper(moshi, jsonRegistrationRequestVo, AsyncMessageType.MessageType.SERVER_REGISTER);
                     websocket.sendText(jsonMessageWrapperVo);
-                    lastTimeMessage = new Date().getTime();
                 }
                 break;
             case AsyncMessageType.MessageType.ERROR_MESSAGE:
@@ -143,7 +146,7 @@ public class Async extends WebSocketAdapter {
                 String jsonMessage = jsonMessageAdapter.toJson(message);
                 String jsonMessageWrapper = getMessageWrapper(moshi, jsonMessage, AsyncMessageType.MessageType.ACK);
                 websocket.sendText(jsonMessageWrapper);
-                lastTimeMessage = new Date().getTime();
+                lastSendMessageTime = new Date().getTime();
                 break;
             case AsyncMessageType.MessageType.MESSAGE_SENDER_ACK_NEEDED:
                 setMessage(clientMessage.getContent());
@@ -154,7 +157,7 @@ public class Async extends WebSocketAdapter {
                 String jsonSenderAckNeeded = jsonSenderAckNeededAdapter.toJson(messageSenderAckNeeded);
                 String jsonSenderAckNeededWrapper = getMessageWrapper(moshi, jsonSenderAckNeeded, AsyncMessageType.MessageType.ACK);
                 websocket.sendText(jsonSenderAckNeededWrapper);
-                lastTimeMessage = new Date().getTime();
+                lastSendMessageTime = new Date().getTime();
                 break;
             case AsyncMessageType.MessageType.MESSAGE:
                 setMessage(clientMessage.getContent());
@@ -174,7 +177,7 @@ public class Async extends WebSocketAdapter {
                     String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfo);
                     String jsonPeerInfoWrapper = getMessageWrapper(moshi, peerMessageJson, AsyncMessageType.MessageType.DEVICE_REGISTER);
                     websocket.sendText(jsonPeerInfoWrapper);
-                    lastTimeMessage = new Date().getTime();
+                    lastSendMessageTime = new Date().getTime();
                 } else {
                     scheduleSendPing(50000);
                 }
@@ -273,7 +276,7 @@ public class Async extends WebSocketAdapter {
         String jsonMessage = jsonAdapter.toJson(message);
         String wrapperJsonString = getMessageWrapper(moshi, jsonMessage, messageType);
         webSocket.sendText(wrapperJsonString);
-        lastTimeMessage = new Date().getTime();
+        lastSendMessageTime = new Date().getTime();
     }
 
     //  it's (relatively) easily resettable because it only persists as long as the app is installed.
@@ -327,7 +330,7 @@ public class Async extends WebSocketAdapter {
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
             webSocketReconnect.sendText(message);
             isDeviceRegister = false;
-            lastTimeMessage = new Date().getTime();
+            lastSendMessageTime = new Date().getTime();
         } else {
             PeerInfo peerInfo = new PeerInfo();
             peerInfo.setAppId(getAppId());
@@ -338,7 +341,7 @@ public class Async extends WebSocketAdapter {
             message = getMessageWrapper(moshi, jason, AsyncMessageType.MessageType.PING);
             webSocketReconnect.sendText(message);
             isDeviceRegister = false;
-            lastTimeMessage = new Date().getTime();
+            lastSendMessageTime = new Date().getTime();
         }
     }
 
@@ -356,31 +359,53 @@ public class Async extends WebSocketAdapter {
     }
 
     /**
-     * When its send message the lastTimeMessage gets updated.
-     * if the {@param currentTime} - {@param lastTimeMessage} was bigger than 10 second
+     * When its send message the lastSendMessageTime gets updated.
+     * if the {@param currentTime} - {@param lastSendMessageTime} was bigger than 10 second
      * it means we need to send ping to keep socket alive.
      * we don't need to set ping interval because its send ping automatically by itself
      * with the {@param type}type that not 0.
      * We set {@param type = 0} with empty content.
-     * We set {@param type = 0} with empty content.
      */
-    private void sendPing() {
+    private void sendPing(Runnable runnable) {
+        lastSendMessageTime = new Date().getTime();
         long currentTime = new Date().getTime();
-        if (currentTime - lastTimeMessage > 10000) {
-            message = getMessageWrapper(moshi, "", AsyncMessageType.MessageType.PING);
-            webSocket.sendText(message);
-            lastTimeMessage = new Date().getTime();
+        if (currentTime - lastReceiveMessageTime >= 70000) {
+            pinging();
+        } else {
+            pingHandler.postDelayed(runnable, 70000);
         }
     }
 
+    private void pinging() {
+        message = getMessageWrapper(moshi, "", AsyncMessageType.MessageType.PING);
+        webSocket.sendText(message);
+        lastSendMessageTime = new Date().getTime();
+        ScheduleCloseSocket();
+    }
+
+    private void ScheduleCloseSocket() {
+        if (lastSendMessageTime - lastReceiveMessageTime >= SOCKET_CLOSE_TIMEOUT) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    webSocket.sendClose();
+                }
+            },SOCKET_CLOSE_TIMEOUT);
+        }
+    }
+
+    /*After a delay Time it calls the method in the Run*/
     private void scheduleSendPing(int delayTime) {
-        pingHandler.postDelayed(new Runnable() {
+        Runnable runnable = null;
+        final Runnable finalRunnable = runnable;
+        runnable = new Runnable() {
             @Override
             public void run() {
-                sendPing();
-                pingHandler.postDelayed(this, 10000);
+                sendPing(finalRunnable);
             }
-        }, delayTime);
+        };
+        pingHandler.postDelayed(runnable, delayTime);
     }
 
     private void stopPing() {
