@@ -13,6 +13,8 @@ public interface SocketContract {
     interface view {
         void showMessage(String message);
 
+        void messageCalled();
+
         void showErrorMessage(String error);
 
         void showOnMessageError(WebSocket websocket, WebSocketException cause, List<WebSocketFrame> frames);
@@ -29,7 +31,7 @@ public interface SocketContract {
 
         void connect(String socketServerAddress, String appId);
 
-        void sendMessage(String textMessage, int messageType);
+        void sendMessage(String textMessage, int messageType, long[] receiversId);
 
         void getLiveState();
 

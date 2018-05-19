@@ -9,8 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketException;
@@ -26,10 +26,13 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
 //    @Inject
     SocketPresenter socketPresenter;
     private static final String SOCKET_SERVER = "ws://172.16.110.235:8003/ws";
-    Button button;
+    Button connectButton;
     Button getStateButton;
     Button closeButton;
+    Button buttonSendMessage;
     TextView textViewPeerId;
+    EditText editTextReceiverId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +42,20 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
 
         socketPresenter = new SocketPresenter(this, this);
         textViewPeerId.setText(socketPresenter.getPeerId());
+
+        buttonSendMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isEmpty(editTextReceiverId)) {
+                    long receiverId = Long.valueOf(editTextReceiverId.getText().toString().trim());
+                    final long[] receiverIdArray = {receiverId};
+                    socketPresenter.sendMessage("hello", 3, receiverIdArray);
+                }else {
+                    return;
+                }
+            }
+        });
+
 
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,7 +68,8 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
                     }
                 }, 3000);
             }
-        });
+
+                    });
 
         getStateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,7 +77,7 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
                 socketPresenter.getLiveState();
             }
         });
-        button.setOnClickListener(new View.OnClickListener() {
+        connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP");
@@ -76,17 +94,32 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
     }
 
     private void init() {
-        button = findViewById(R.id.button);
+        connectButton = findViewById(R.id.button);
         getStateButton = findViewById(R.id.getState);
         closeButton = findViewById(R.id.buttonclosesocket);
+        buttonSendMessage = findViewById(R.id.buttonSendMessage);
         textViewPeerId = findViewById(R.id.textViewPeerId);
+        editTextReceiverId = findViewById(R.id.editTextReceiverId);
     }
+
+    private boolean isEmpty(EditText etText) {
+        if (etText.getText().toString().trim().length() > 0){
+            return true;
+        }
+        return false;
+    }
+
 
     @Override
     public void showMessage(String message) {
         TextView textViewShowMessage = findViewById(R.id.textViewShowMessage);
         textViewShowMessage.setText(message);
         Log.d("message", message);
+    }
+
+    @Override
+    public void messageCalled() {
+
     }
 
     @Override
@@ -115,7 +148,7 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
 
     }
 
-    private void sendMessage(String textMessage, int messageType) {
-        socketPresenter.sendMessage(textMessage, messageType);
+    private void sendMessage(String textMessage, int messageType, long[] receiversId) {
+        socketPresenter.sendMessage(textMessage, messageType, receiversId);
     }
 }

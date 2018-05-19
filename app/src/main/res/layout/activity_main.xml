@@ -87,4 +87,30 @@
         app:layout_constraintStart_toStartOf="@+id/buttonclosesocket"
         app:layout_constraintTop_toBottomOf="@+id/textViewstate" />
 
+    <EditText
+        android:id="@+id/editTextReceiverId"
+        android:layout_width="181dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="56dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:ems="10"
+        android:hint="receiver id"
+        android:inputType="textPersonName"
+        app:layout_constraintBottom_toTopOf="@+id/textViewShowMessage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.692"
+        app:layout_constraintStart_toEndOf="@+id/buttonSendMessage"
+        tools:text="16565" />
+
+    <Button
+        android:id="@+id/buttonSendMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="56dp"
+        android:layout_marginStart="16dp"
+        android:text="Send Message"
+        app:layout_constraintBottom_toTopOf="@+id/textViewShowMessage"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

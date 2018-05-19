@@ -16,9 +16,11 @@ import com.fanap.podasync.model.Message;
 import com.fanap.podasync.model.MessageWrapperVo;
 import com.fanap.podasync.model.PeerInfo;
 import com.fanap.podasync.model.RegistrationRequest;
+import com.neovisionaries.ws.client.PayloadGenerator;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
+import com.neovisionaries.ws.client.WebSocketExtension;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
 import com.neovisionaries.ws.client.WebSocketState;
@@ -30,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static com.neovisionaries.ws.client.WebSocketState.OPEN;
 
@@ -46,7 +49,6 @@ public class Async extends WebSocketAdapter {
     private WebSocket webSocketReconnect;
     private static final String TAG = "Async" + " ";
     private static Async instance;
-    private static String uniqueID = null;
     private boolean isServerRegister = false;
     private boolean isDeviceRegister = false;
     private static SharedPreferences sharedPrefs;
@@ -65,12 +67,25 @@ public class Async extends WebSocketAdapter {
     private MutableLiveData<String> stateLiveData = new MutableLiveData<>();
     private String serverAddress;
     final Handler pingHandler = new Handler(Looper.getMainLooper());
+    private int getMessageCalled;
 
     public Async() {
+        //Empty constructor
     }
 
     public static Async getInstance(Context context) {
         if (instance == null) {
+            sharedPrefs = context.getSharedPreferences(AsyncConstant.Constants.PREFERENCE, Context.MODE_PRIVATE);
+            saveDeviceId(getUniqueDeviceID());
+            moshi = new Moshi.Builder().build();
+            instance = new Async();
+        }
+        return instance;
+    }
+
+    public static Async getInstance(Context context, String deviceId) {
+        if (instance == null) {
+            saveDeviceId(deviceId);
             sharedPrefs = context.getSharedPreferences(AsyncConstant.Constants.PREFERENCE, Context.MODE_PRIVATE);
             moshi = new Moshi.Builder().build();
             instance = new Async();
@@ -79,7 +94,7 @@ public class Async extends WebSocketAdapter {
     }
 
     /**
-     * @param textMessage
+     * @param textMessage that received when socket send message to Async
      */
 
     @Override
@@ -111,7 +126,6 @@ public class Async extends WebSocketAdapter {
                  When socket closes by any reason
                  , server is still registered and we sent a lot of message but
                  they are still in the queue
-
                  */
                 //TODO handle queue message
                 if (isServerRegister && peerId.equals(getPeerId())) {
@@ -170,8 +184,8 @@ public class Async extends WebSocketAdapter {
                     peerInfo.setRenew(true);
                     peerInfo.setAppId(getAppId());
                     if (clientMessage != null) {
-                        peerInfo.setDeviceId(clientMessage.getContent());
-                        saveDeviceId(clientMessage.getContent());
+                        peerInfo.setDeviceId(getDeviceId());
+//                      saveDeviceId(clientMessage.getContent());
                     }
                     JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
                     String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfo);
@@ -244,16 +258,41 @@ public class Async extends WebSocketAdapter {
         reConnect();
     }
 
-    public void webSocketConnect(String socketServerAddress, final String appId) {
+    //Connect webSocket to the Async
+    public void connect(String socketServerAddress, final String appId) {
         WebSocketFactory webSocketFactory = new WebSocketFactory();
         webSocketFactory.setVerifyHostname(false);
         setAppId(appId);
         setServerAddress(socketServerAddress);
+
         try {
             webSocket = webSocketFactory
                     .setConnectionTimeout(TIMEOUT)
                     .createSocket(socketServerAddress)
                     .addListener(this);
+            webSocket.setPingPayloadGenerator(new PayloadGenerator() {
+                @Override
+                public byte[] generate() {
+                    PeerInfo peerInfoVO = new PeerInfo();
+                    peerInfoVO.setAppId(appId);
+                    peerInfoVO.setDeviceId(getDeviceId());
+
+                    JsonAdapter<PeerInfo> jsonPeerMessageAdapter = moshi.adapter(PeerInfo.class);
+                    String peerMessageJson = jsonPeerMessageAdapter.toJson(peerInfoVO);
+                    String jsonPeerInfoWrapper = getMessageWrapper(moshi, peerMessageJson, (byte) AsyncMessageType.MessageType.PING);
+
+                    try {
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    return jsonPeerInfoWrapper.getBytes();
+                }
+
+            });
+            webSocket.setMaxPayloadSize(100);
+            webSocket.addExtension(WebSocketExtension.PERMESSAGE_DEFLATE);
             webSocket.connectAsynchronously();
         } catch (IOException e) {
             e.printStackTrace();
@@ -269,29 +308,20 @@ public class Async extends WebSocketAdapter {
         return jsonMessageWrapperVoAdapter.toJson(messageWrapperVo);
     }
 
-    public void sendMessage(String textContent, int messageType) {
+    /**
+     * @Param textContent
+     * @Param messageType it could be 3, 4, 5
+     * @Param []receiversId the Id's that we want to send
+     */
+    public void sendMessage(String textContent, int messageType, long[] receiversId) {
         Message message = new Message();
         message.setContent(textContent);
+        message.setReceivers(receiversId);
         JsonAdapter<Message> jsonAdapter = moshi.adapter(Message.class);
         String jsonMessage = jsonAdapter.toJson(message);
         String wrapperJsonString = getMessageWrapper(moshi, jsonMessage, messageType);
         webSocket.sendText(wrapperJsonString);
         lastSendMessageTime = new Date().getTime();
-    }
-
-    //  it's (relatively) easily resettable because it only persists as long as the app is installed.
-    private synchronized String getUniqueID() {
-        if (uniqueID == null) {
-
-            uniqueID = sharedPrefs.getString(AsyncConstant.Constants.PREFERENCE, null);
-            if (uniqueID == null) {
-                uniqueID = UUID.randomUUID().toString();
-                SharedPreferences.Editor editor = sharedPrefs.edit();
-                editor.putString(AsyncConstant.Constants.PREFERENCE, uniqueID);
-                editor.apply();
-            }
-        }
-        return uniqueID;
     }
 
     public void closeSocket() {
@@ -355,7 +385,7 @@ public class Async extends WebSocketAdapter {
         editor.apply();
         isServerRegister = false;
         isDeviceRegister = false;
-        webSocketConnect(getServerAddress(), getAppId());
+        connect(getServerAddress(), getAppId());
     }
 
     /**
@@ -380,6 +410,7 @@ public class Async extends WebSocketAdapter {
         message = getMessageWrapper(moshi, "", AsyncMessageType.MessageType.PING);
         webSocket.sendText(message);
         lastSendMessageTime = new Date().getTime();
+        Log.i("Ping", "Sent at" + lastSendMessageTime);
         ScheduleCloseSocket();
     }
 
@@ -391,11 +422,12 @@ public class Async extends WebSocketAdapter {
                 public void run() {
                     webSocket.sendClose();
                 }
-            },SOCKET_CLOSE_TIMEOUT);
+            }, SOCKET_CLOSE_TIMEOUT);
         }
     }
 
     /*After a delay Time it calls the method in the Run*/
+
     private void scheduleSendPing(int delayTime) {
         Runnable runnable = null;
         final Runnable finalRunnable = runnable;
@@ -422,14 +454,24 @@ public class Async extends WebSocketAdapter {
     }
 
     //Save peerId in the SharedPreferences
+
     private void savePeerId(String peerId) {
         SharedPreferences.Editor editor = sharedPrefs.edit();
         editor.putString(AsyncConstant.Constants.PEER_ID, peerId);
         editor.apply();
     }
 
+    //  it's (relatively) easily resettable because it only persists as long as the app is installed.
+    private static synchronized String getUniqueDeviceID() {
+        String uniqueID = UUID.randomUUID().toString();
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+        editor.putString(AsyncConstant.Constants.DEVICE_ID, uniqueID);
+        editor.apply();
+        return uniqueID;
+    }
+
     //Save deviceId in the SharedPreferences
-    private void saveDeviceId(String deviceId) {
+    private static void saveDeviceId(String deviceId) {
         SharedPreferences.Editor editor = sharedPrefs.edit();
         editor.putString(AsyncConstant.Constants.DEVICE_ID, deviceId);
         editor.apply();
@@ -465,6 +507,14 @@ public class Async extends WebSocketAdapter {
 
     private void setState(String state) {
         this.state = state;
+    }
+
+    public int getMessageCalled() {
+        return getMessageCalled;
+    }
+
+    private void setMessageCalled(int getMessageCalled) {
+        this.getMessageCalled = getMessageCalled;
     }
 
     private void setErrorMessage(String errorMessage) {

@@ -19,17 +19,18 @@ public class SocketPresenter implements SocketContract.presenter {
     public String getMessage() {
         String message = async.getMessage();
         view.showMessage(message);
+        view.messageCalled();
         return message;
     }
 
     @Override
     public void connect(String socketServerAddress, String appId) {
-        async.webSocketConnect(socketServerAddress, appId);
+        async.connect(socketServerAddress, appId);
     }
 
     @Override
-    public void sendMessage(String textMessage, int messageType) {
-        async.sendMessage(textMessage, messageType);
+    public void sendMessage(String textMessage, int messageType, long[] receiversId) {
+        async.sendMessage(textMessage, messageType,receiversId);
     }
 
     @Override
