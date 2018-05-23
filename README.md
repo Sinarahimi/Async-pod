@@ -24,13 +24,12 @@ What things you need to Add this module to your project and after that set the `
 
 | Method                        | Description                                          |
 |:------------------------------|:-----------------------------------------------------|
-| `connect(String socketServerAddress, String appId)`         | Called when an `onXxx()` method threw a `Throwable`. |
-| `sendMessage(String textMessage, int messageType)`               | Called when a binary frame was received.             |
-| `getLiveState()`             | Called when a binary message was received.           |
-| `getState()`                | Called when a close frame was received.              |
-| `getErrorMessage()`                 | Called after the opening handshake succeeded.        |
-| `isSocketOpen()`              | Called when `connectAsynchronously()` failed.        |
-| `getPeerId()`         | Called when a continuation frame was received.       |
+| `connect(String socketServerAddress, String appId)`         | Called when we want to connect to async. |
+| `sendMessage(String textMessage, int messageType)`               | Called when we want to send a message.             |
+| `getLiveState()`             | gets the state of the socket.           |
+| `getState()`                |  gets the state of the socket.                |
+| `getErrorMessage()`                 | gets the error of the async.        |
+| `getPeerId()`         | gets the peer id       |
 
 ## Built With
 
