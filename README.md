@@ -30,7 +30,7 @@ What things you need to Add this module to your project and after that set the `
 | `getState()`                |  gets the state of the socket.                |
 | `getErrorMessage()`                 | gets the error of the async.        |
 | `getPeerId()`         | gets the peer id       |
-
+| `getMessage`         | gets message       |
 ## Built With
 
 * [moshi](https://github.com/square/moshi) - Moshi
