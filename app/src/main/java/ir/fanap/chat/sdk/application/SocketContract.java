@@ -27,7 +27,7 @@ public interface SocketContract {
     interface presenter {
         String getMessage();
 
-        void connect(String socketServerAddress, String appId);
+        void connect(String socketServerAddress, String appId, String serverName, String token);
 
         void sendMessage(String textMessage, int messageType);
 

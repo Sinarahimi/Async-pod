@@ -22,8 +22,6 @@ import ir.fanap.chat.sdk.R;
 
 public class ExampleActivity extends AppCompatActivity implements SocketContract.view {
 
-    //("ws://172.16.110.235:8003/ws", "UIAPP")
-//    @Inject
     SocketPresenter socketPresenter;
     private static final String SOCKET_SERVER = "ws://172.16.110.235:8003/ws";
 
@@ -58,7 +56,7 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP");
+                socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP","async-server","afa51d8291d444072a0831d3a18cb5030");
             }
         });
 

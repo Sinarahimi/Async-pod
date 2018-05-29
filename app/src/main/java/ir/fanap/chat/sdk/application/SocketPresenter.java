@@ -23,8 +23,8 @@ public class SocketPresenter implements SocketContract.presenter {
     }
 
     @Override
-    public void connect(String socketServerAddress, String appId) {
-        async.webSocketConnect(socketServerAddress, appId);
+    public void connect(String socketServerAddress, String appId, String serverName, String token) {
+        async.connect(socketServerAddress, appId, serverName, token);
     }
 
     @Override
