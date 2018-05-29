@@ -24,7 +24,7 @@ What things you need to Add this module to your project and after that set the `
 
 | Method                        | Description                                          |
 |:------------------------------|:-----------------------------------------------------|
-| `connect(String socketServerAddress, String appId)`         | Called when we want to connect to async. |
+| `connect(socketServerAddress, appId, serverName, token)`         | Called when we want to connect to async. |
 | `sendMessage(String textMessage, int messageType)`               | Called when we want to send a message.             |
 | `getLiveState()`             | gets the state of the socket.           |
 | `getState()`                |  gets the state of the socket.                |
