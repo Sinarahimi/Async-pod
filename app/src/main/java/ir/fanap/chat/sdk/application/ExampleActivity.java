@@ -34,38 +34,17 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
         Button closeButton = findViewById(R.id.buttonclosesocket);
         socketPresenter = new SocketPresenter(this, this);
 
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        socketPresenter.closeSocket();
-                    }
-                },3000);
-            }
+        closeButton.setOnClickListener(v -> {
+            Handler handler = new Handler();
+            handler.postDelayed(() -> socketPresenter.closeSocket(),3000);
         });
 
-        getStateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                socketPresenter.getLiveState();
-            }
-        });
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP","async-server","afa51d8291d444072a0831d3a18cb5030");
-            }
-        });
+        getStateButton.setOnClickListener(v -> socketPresenter.getLiveState());
+        button.setOnClickListener(v -> socketPresenter.connect("ws://172.16.110.235:8003/ws", "UIAPP","async-server","afa51d8291d444072a0831d3a18cb5030"));
 
-        socketPresenter.getLiveData().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                TextView textView = findViewById(R.id.textViewstate);
-                textView.setText(s);
-            }
+        socketPresenter.getLiveData().observe(this, s -> {
+            TextView textView = findViewById(R.id.textViewstate);
+            textView.setText(s);
         });
     }
 
