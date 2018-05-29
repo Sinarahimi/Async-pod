@@ -3,7 +3,7 @@ package ir.fanap.chat.sdk.application;
 import android.arch.lifecycle.LiveData;
 import android.content.Context;
 
-import com.fanap.podasync.networking.Async;
+import com.fanap.podasync.Async;
 
 public class SocketPresenter implements SocketContract.presenter {
 

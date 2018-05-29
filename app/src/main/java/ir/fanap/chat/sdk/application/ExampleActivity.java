@@ -34,15 +34,7 @@ public class ExampleActivity extends AppCompatActivity implements SocketContract
         Button button = findViewById(R.id.button);
         Button getStateButton = findViewById(R.id.getState);
         Button closeButton = findViewById(R.id.buttonclosesocket);
-        Button buttonLogOut = findViewById(R.id.buttonLogOut);
         socketPresenter = new SocketPresenter(this, this);
-
-        buttonLogOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-               Toast.makeText(ExampleActivity.this,Boolean.toString(socketPresenter.isSocketOpen()),Toast.LENGTH_SHORT).show();
-            }
-        });
 
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override

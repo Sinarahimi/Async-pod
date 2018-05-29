@@ -1,4 +1,4 @@
-package com.fanap.podasync.networking;
+package com.fanap.podasync;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
